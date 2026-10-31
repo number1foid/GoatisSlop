@@ -24,7 +24,7 @@ const testimonials = [
           We don't just eat your grass. We <em>disrupt</em> it.
         </p>
         <div class="cta">
-          <RouterLink to="/api" class="btn">Check today's grazing forecast</RouterLink>
+          <RouterLink to="/api" class="btn">Search the archive</RouterLink>
           <RouterLink to="/portfolio" class="btn ghost">See our work</RouterLink>
         </div>
       </div>

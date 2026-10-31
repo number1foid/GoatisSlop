@@ -1,156 +1,141 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 
-// Open-Meteo: free, keyless weather + geocoding APIs (https://open-meteo.com)
-const GEO_URL = 'https://geocoding-api.open-meteo.com/v1/search'
-const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast'
+// Our own Cloud Function (functions/index.js), which proxies the goatis.net transcript archive.
+const API = '/api/v1'
 
-const query = ref('Amsterdam')
-const place = ref(null)
-const weather = ref(null)
-const loading = ref(false)
+const stats = ref(null)
+const quote = ref(null)
+const quoteLoading = ref(false)
+
+const query = ref('')
+const results = ref(null)
+const searching = ref(false)
 const error = ref('')
 
-async function fetchJson(url) {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`Request failed (${res.status})`)
-  return res.json()
+async function getJson(path) {
+  const res = await fetch(`${API}/${path}`)
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error ?? `Request failed (${res.status})`)
+  return data
 }
 
-async function search() {
-  const name = query.value.trim()
-  if (!name) return
-  loading.value = true
+async function loadQuote() {
+  quoteLoading.value = true
   error.value = ''
   try {
-    const geo = await fetchJson(`${GEO_URL}?name=${encodeURIComponent(name)}&count=1&language=en&format=json`)
-    if (!geo.results?.length) throw new Error(`No pasture called "${name}" found. Our goats looked everywhere.`)
-    const p = geo.results[0]
-    const params = new URLSearchParams({
-      latitude: p.latitude,
-      longitude: p.longitude,
-      current: 'temperature_2m,precipitation,wind_speed_10m',
-      daily: 'temperature_2m_max,precipitation_sum,wind_speed_10m_max',
-      timezone: 'auto',
-      forecast_days: '5',
-    })
-    weather.value = await fetchJson(`${FORECAST_URL}?${params}`)
-    place.value = p
+    quote.value = await getJson('random')
   } catch (e) {
     error.value = e.message
   } finally {
-    loading.value = false
+    quoteLoading.value = false
   }
 }
 
-// The patented Goatis Grazing Index™ (GGI). Peer-reviewed by zero peers.
-function grazingIndex(temp, rain, wind) {
-  let score = 100
-  score -= Math.abs(temp - 18) * 2.5
-  score -= rain * 8
-  score -= Math.max(0, wind - 15) * 1.5
-  return Math.round(Math.min(100, Math.max(0, score)))
+async function search() {
+  const q = query.value.trim()
+  if (q.length < 3) {
+    error.value = 'Type at least 3 characters.'
+    return
+  }
+  searching.value = true
+  error.value = ''
+  try {
+    results.value = await getJson(`search?q=${encodeURIComponent(q)}&limit=20`)
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    searching.value = false
+  }
 }
 
-function verdict(score) {
-  if (score >= 80) return { label: 'Prime munching', note: 'Release the herd. Shareholders expect results.' }
-  if (score >= 60) return { label: 'Solid grazing', note: 'Acceptable. Middle management goats may proceed.' }
-  if (score >= 40) return { label: 'Questionable', note: 'Goats will graze, but they will complain on LinkedIn.' }
-  if (score >= 20) return { label: 'Poor', note: 'Recommend indoor synergy sessions (eating cardboard).' }
-  return { label: 'Catastrophic', note: 'All goats to the bunker. Bring snacks.' }
+function highlight(text, q) {
+  const escaped = text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
+  const needle = q.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return escaped.replace(new RegExp(needle, 'gi'), (m) => `<mark>${m}</mark>`)
 }
 
-const current = computed(() => {
-  if (!weather.value) return null
-  const c = weather.value.current
-  const score = grazingIndex(c.temperature_2m, c.precipitation, c.wind_speed_10m)
-  return { ...c, score, ...verdict(score) }
+onMounted(async () => {
+  loadQuote()
+  try {
+    stats.value = await getJson('stats')
+  } catch (e) {
+    error.value = e.message
+  }
 })
-
-const days = computed(() => {
-  if (!weather.value) return []
-  const d = weather.value.daily
-  return d.time.map((date, i) => {
-    const score = grazingIndex(d.temperature_2m_max[i], d.precipitation_sum[i] / 4, d.wind_speed_10m_max[i])
-    return {
-      date: new Date(date).toLocaleDateString('en', { weekday: 'short', day: 'numeric', month: 'short' }),
-      temp: d.temperature_2m_max[i],
-      rain: d.precipitation_sum[i],
-      score,
-      label: verdict(score).label,
-    }
-  })
-})
-
-onMounted(search)
 </script>
 
 <template>
   <section class="container page-head">
     <span class="tag">Live API</span>
-    <h1>Grazing Forecast API</h1>
+    <h1>The Archive</h1>
     <p class="muted">
-      Real-time weather data from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>,
-      run through our patented Goatis Grazing Index™ to answer life's biggest question: should the goats go outside?
+      Every transcript from the <a href="https://goatis.net" target="_blank" rel="noopener">goatis.net</a> video archive,
+      served through our own API at <code>/api/v1</code>.
+    </p>
+    <p v-if="stats" class="stats">
+      <strong>{{ stats.videos.toLocaleString() }}</strong> videos ·
+      <strong>{{ stats.hours.toLocaleString() }}</strong> hours ·
+      {{ stats.firstDate?.slice(0, 4) }}–{{ stats.latestDate?.slice(0, 4) }}
     </p>
   </section>
 
   <section class="container section">
+    <p v-if="error" class="error card">{{ error }}</p>
+
+    <div class="card quote">
+      <h2>Random wisdom</h2>
+      <template v-if="quote">
+        <blockquote>“{{ quote.quote }}”</blockquote>
+        <p class="small">
+          From
+          <a v-if="quote.video.url" :href="quote.video.url" target="_blank" rel="noopener">{{ quote.video.title }}</a>
+          <span v-else>{{ quote.video.title }}</span>
+          <span v-if="quote.video.date"> · {{ quote.video.date }}</span>
+        </p>
+      </template>
+      <p v-else class="muted">Loading the archive (the first request can take a few seconds)…</p>
+      <button class="btn" :disabled="quoteLoading" @click="loadQuote">{{ quoteLoading ? 'Loading…' : 'Another one' }}</button>
+    </div>
+
+    <h2>Search the transcripts</h2>
     <form class="search" @submit.prevent="search">
-      <input v-model="query" type="text" placeholder="Enter a city or pasture…" aria-label="City" />
-      <button class="btn" :disabled="loading">{{ loading ? 'Consulting goats…' : 'Forecast' }}</button>
+      <input v-model="query" type="text" placeholder="e.g. raw meat, fruit, slaves…" aria-label="Search transcripts" />
+      <button class="btn" :disabled="searching">{{ searching ? 'Searching…' : 'Search' }}</button>
     </form>
 
-    <p v-if="error" class="error card">🐐💥 {{ error }}</p>
-
-    <template v-if="current && place && !error">
-      <div class="card now">
-        <div>
-          <p class="muted">Right now in</p>
-          <h2>{{ place.name }}<span class="muted">, {{ place.country }}</span></h2>
-          <p>
-            🌡️ {{ current.temperature_2m }}°C · 🌧️ {{ current.precipitation }} mm · 💨 {{ current.wind_speed_10m }} km/h
-          </p>
-          <p><strong>{{ current.label }}.</strong> {{ current.note }}</p>
-        </div>
-        <div class="score" :style="{ '--pct': current.score }">
-          <strong>{{ current.score }}</strong>
-          <span>GGI™</span>
-        </div>
-      </div>
-
-      <h3>5-day grazing outlook</h3>
-      <div class="days">
-        <div v-for="d in days" :key="d.date" class="card day">
-          <p class="muted">{{ d.date }}</p>
-          <strong class="day-score">{{ d.score }}</strong>
-          <p class="small">{{ d.label }}</p>
-          <p class="small">{{ d.temp }}°C · {{ d.rain }} mm</p>
-        </div>
-      </div>
+    <template v-if="results">
+      <p class="muted">
+        {{ results.total.toLocaleString() }} videos mention “{{ results.query }}”<span v-if="results.total > results.results.length">, showing the first {{ results.results.length }}</span>.
+      </p>
+      <ul class="results">
+        <li v-for="r in results.results" :key="r.title + r.date" class="card">
+          <h3>
+            <a v-if="r.url" :href="r.url" target="_blank" rel="noopener" v-html="highlight(r.title, results.query)" />
+            <span v-else v-html="highlight(r.title, results.query)" />
+          </h3>
+          <p class="small">{{ r.date }}<span v-if="r.minutes"> · {{ r.minutes }} min</span></p>
+          <p v-if="r.snippet" class="snippet" v-html="highlight(r.snippet, results.query)" />
+        </li>
+      </ul>
     </template>
   </section>
 </template>
 
 <style scoped>
-.search { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+.stats { margin-top: 12px; }
+code { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; }
+.error { color: #b3261e; }
+.quote { margin-bottom: 40px; }
+.quote h2 { margin-top: 0; }
+.quote blockquote { font-size: 1.25rem; font-style: italic; margin: 0 0 8px; }
+.search { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
 .search input { flex: 1; min-width: 200px; padding: 12px 18px; border-radius: 999px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font-size: 1rem; }
 .search input:focus { outline: none; border-color: var(--brand); }
-.error { color: #b3261e; }
-.now { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; margin-bottom: 32px; }
-.now h2 { margin: 0 0 8px; }
-.now p { margin: 4px 0; }
-.score {
-  width: 140px; height: 140px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: conic-gradient(var(--brand) calc(var(--pct) * 1%), var(--border) 0);
-  position: relative;
-}
-.score::before { content: ''; position: absolute; inset: 12px; border-radius: 50%; background: var(--surface); }
-.score > * { position: relative; }
-.score strong { font-size: 2.4rem; line-height: 1; }
-.score span { font-size: 0.8rem; color: var(--muted); }
-.days { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-.day { text-align: center; padding: 16px; }
-.day p { margin: 4px 0; }
-.day-score { font-size: 2rem; color: var(--brand); }
+.results { list-style: none; padding: 0; display: grid; gap: 12px; }
+.results .card { padding: 16px 20px; }
+.results h3 { margin: 0 0 4px; font-size: 1.05rem; }
+.results p { margin: 4px 0; }
+.snippet { color: var(--muted); }
+:deep(mark) { background: var(--accent); color: #2b2620; border-radius: 3px; padding: 0 2px; }
 </style>
