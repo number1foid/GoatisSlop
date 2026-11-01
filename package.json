@@ -8,8 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "emulators": "firebase emulators:start --only functions",
-    "deploy": "vite build && firebase deploy --only hosting,functions",
-    "deploy:hosting": "vite build && firebase deploy --only hosting"
+    "deploy": "vite build && firebase deploy --only hosting",
+    "deploy:functions": "firebase deploy --only functions"
   },
   "dependencies": {
     "firebase": "^13.1.0",

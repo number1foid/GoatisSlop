@@ -14,7 +14,7 @@ watch(() => route.fullPath, () => { menuOpen.value = false })
       <button class="menu-toggle" :aria-expanded="menuOpen" aria-label="Toggle menu" @click="menuOpen = !menuOpen">☰</button>
       <nav :class="{ open: menuOpen }">
         <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/api">Archive API</RouterLink>
+        <RouterLink to="/api">YouTube API</RouterLink>
         <RouterLink to="/portfolio">Portfolio</RouterLink>
       </nav>
     </div>
