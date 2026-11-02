@@ -9,6 +9,9 @@ A satirical website about Goatis, built with Vue 3 + Vite and hosted on Firebase
 | `/`          | Homepage                                                                                     |
 | `/api`       | The Channel: live channel stats and uploads from the [YouTube Data API v3](https://developers.google.com/youtube/v3) |
 | `/portfolio` | Portfolio                                                                                    |
+| `/ideology`  | Ideology                                                                                     |
+| `/satire`    | Satire                                                                                       |
+| `/controversy` | Controversy                                                                                |
 
 ## Develop
 
