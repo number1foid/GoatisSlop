@@ -104,5 +104,5 @@
 
 <style scoped>
 .note { color: var(--muted); font-size: 0.95rem; border-left: 2px solid var(--border); padding-left: 14px; }
-blockquote { margin: 0 0 1.15em; padding: 4px 0 4px 18px; border-left: 3px solid var(--accent); font-size: 1.15rem; font-style: italic; }
+blockquote { width: min(calc(100% - 32px), calc(var(--measure) - 32px)); margin: 0 auto 1.15em; padding: 4px 0 4px 18px; border-left: 3px solid var(--accent); font-size: 1.15rem; font-style: italic; }
 </style>

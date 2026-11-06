@@ -138,7 +138,7 @@
 
 <style scoped>
 .note { color: var(--muted); font-size: 0.95rem; border-left: 2px solid var(--border); padding-left: 14px; }
-blockquote { margin: 8px auto 28px; border-left: 3px solid var(--accent); padding-left: 18px; }
+blockquote { width: min(calc(100% - 32px), calc(var(--measure) - 32px)); margin: 8px auto 28px; border-left: 3px solid var(--accent); padding: 0 0 0 18px; }
 blockquote p { font-size: 1.15rem; font-style: italic; margin: 0 0 4px; }
 cite { font-style: normal; font-size: 0.85rem; color: var(--muted); }
 </style>

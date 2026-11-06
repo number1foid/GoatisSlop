@@ -46,7 +46,8 @@ function onMeta(e) {
 
 <style scoped>
 .video-section { margin-left: 0; margin-right: 0; }
-.caption { max-width: var(--measure); margin-left: auto; margin-right: auto; padding: 0 16px; }
+/* The section is full width, but its description lines up with the text column. */
+.caption { width: min(calc(100% - 32px), calc(var(--measure) - 32px)); margin-left: auto; margin-right: auto; }
 .stage { background: #000; }
 .stage iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; }
 .stage video { display: block; width: 100%; height: auto; }
