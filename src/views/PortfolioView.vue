@@ -28,7 +28,7 @@ import MediaVideo from '../components/MediaVideo.vue'
 
     <p>So instead, here is an edit claiming that the "gap" between Goatis and Aajonus Vonderplanitz is "at least as deep as the Pacific Ocean", seemingly endorsing the idea that Aajonus has been far more pivotal to the primal lifestyle movement than Goatis, by a large margin.</p>
 
-    <MediaVideo src="/media/portfolio-aajonus-gap.mp4" title="The gap between Goatis and Aajonus" />
+    <MediaVideo src="/media/portfolio-aajonus-gap.mp4" :aspect="9 / 16" title="The gap between Goatis and Aajonus" />
   </article>
 </template>
 

@@ -8,6 +8,9 @@ const props = defineProps({
   youtube: { type: String, default: '' }, // YouTube video ID or URL
   caption: { type: String, default: '' }, // shown above the video
   title: { type: String, default: 'Video' },
+  // Width / height of a local video, if known. Lets the section take its final size before the file loads,
+  // so the page doesn't shift (which would also throw off restored scroll positions).
+  aspect: { type: Number, default: null },
 })
 
 const WIDE_ENOUGH = 1.2 // width / height
@@ -18,7 +21,7 @@ const youtubeId = computed(() => {
 })
 
 // YouTube embeds are 16:9. Local files report their size once metadata loads.
-const aspect = ref(props.youtube ? 16 / 9 : null)
+const aspect = ref(props.youtube ? 16 / 9 : props.aspect)
 const tall = computed(() => aspect.value !== null && aspect.value < WIDE_ENOUGH)
 
 function onMeta(e) {

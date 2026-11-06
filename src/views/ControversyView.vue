@@ -31,7 +31,7 @@ import MediaVideo from '../components/MediaVideo.vue'
     <p>This is also when the stunts that made him famous began. Inspired by another YouTuber who had eaten a raw cow heart at a vegan protest, he ate a raw goat's head at a vegan festival. Later performances included a pig's head and a squirrel in Australia and the UK, and a necklace made of a dead bird. The public, and vegans in particular, were not won over.</p>
 
     <MediaVideo
-      src="/media/controversy-raw-poultry.mp4"
+      src="/media/controversy-raw-poultry.mp4" :aspect="9 / 16"
       title="Raw poultry at a vegan event"
       caption="An edit of a shirtless Goatis, covered in fake blood eating raw poultry at a vegan event."
     />
