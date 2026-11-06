@@ -28,12 +28,12 @@ try {
 }
 export const animatePage = ref(true)
 
-router.beforeEach((to) => {
-  animatePage.value = !seenPages.has(to.path)
-})
-
 router.afterEach((to) => {
   document.title = `${to.meta.title} · Goatis`
+  // Decided here, not in beforeEach: the route has just changed, and Vue renders the new page in its next
+  // flush, so the old page never sees this flag change. Flipping it earlier (while a lazy page loads) would
+  // turn the animation back on for the page being left, replaying it.
+  animatePage.value = !seenPages.has(to.path)
   seenPages.add(to.path)
   try {
     sessionStorage.setItem(SEEN_KEY, JSON.stringify([...seenPages]))
