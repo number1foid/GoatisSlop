@@ -1,17 +1,11 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { getChannel, getUploads } from '../youtube'
+import { computed, onMounted, toRefs } from 'vue'
+import { channelState, ensureChannelLoaded, loadMore } from '../channelStore'
 import MediaVideo from '../components/MediaVideo.vue'
 
-const channel = ref(null)
-const videos = ref([])
-const nextPageToken = ref(null)
-const loading = ref(false)
-const error = ref('')
-const selected = ref(null)
+// State is shared through channelStore, so revisiting this page reuses what's already loaded.
+const { channel, videos, nextPageToken, loading, error, selected, filter, sortBy } = toRefs(channelState)
 
-const filter = ref('')
-const sortBy = ref('newest')
 const sorters = {
   newest: (a, b) => b.publishedAt.localeCompare(a.publishedAt),
   views: (a, b) => b.views - a.views,
@@ -36,37 +30,13 @@ function duration(s) {
   return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`
 }
 
-async function loadMore() {
-  loading.value = true
-  error.value = ''
-  try {
-    const page = await getUploads(channel.value.uploadsPlaylist, nextPageToken.value)
-    videos.value.push(...page.videos)
-    nextPageToken.value = page.nextPageToken
-    selected.value ??= videos.value[0] ?? null
-  } catch (e) {
-    error.value = e.message
-  } finally {
-    loading.value = false
-  }
-}
-
 function play(video) {
   selected.value = video
   const top = document.getElementById('player').getBoundingClientRect().top + window.scrollY - 80
   window.scrollTo({ top, behavior: 'smooth' })
 }
 
-onMounted(async () => {
-  loading.value = true
-  try {
-    channel.value = await getChannel()
-    await loadMore()
-  } catch (e) {
-    error.value = e.message
-    loading.value = false
-  }
-})
+onMounted(ensureChannelLoaded)
 </script>
 
 <template>
