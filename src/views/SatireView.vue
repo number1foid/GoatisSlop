@@ -24,7 +24,7 @@ import MediaVideo from '../components/MediaVideo.vue'
     <MediaVideo
       src="/media/satire-exhibit-b.mp4"
       title="Satire, Exhibit B"
-      caption="Goatis in a reaction video, stating that dark chocolate is made &quot;toxic seeds&quot;, and asking how it can be good for a person's heart. The face scan then suddenly cues, with a high-pitched screaming noise."
+      caption="Goatis in a reaction video, stating that dark chocolate is made of &quot;toxic seeds&quot;, and asking how it can be good for a person's heart. The face scan then suddenly cues, with a high-pitched screaming noise."
     />
 
     <h2 class="category">Rage</h2>
