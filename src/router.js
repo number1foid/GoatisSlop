@@ -1,15 +1,16 @@
 import { ref } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
+import { nl } from './i18n'
 import HomeView from './views/HomeView.vue'
 
 const routes = [
-  { path: '/', name: 'home', component: HomeView, meta: { title: 'Home' } },
-  { path: '/api', name: 'api', component: () => import('./views/ApiView.vue'), meta: { title: 'The Channel' } },
-  { path: '/portfolio', name: 'portfolio', component: () => import('./views/PortfolioView.vue'), meta: { title: 'Portfolio' } },
-  { path: '/ideology', name: 'ideology', component: () => import('./views/IdeologyView.vue'), meta: { title: 'Ideology' } },
-  { path: '/satire', name: 'satire', component: () => import('./views/SatireView.vue'), meta: { title: 'Satire' } },
-  { path: '/controversy', name: 'controversy', component: () => import('./views/ControversyView.vue'), meta: { title: 'Controversy' } },
-  { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('./views/NotFoundView.vue'), meta: { title: 'Lost Goat' } },
+  { path: '/', name: 'home', component: HomeView, meta: { title: 'Home', titleNl: 'Home' } },
+  { path: '/api', name: 'api', component: () => import('./views/ApiView.vue'), meta: { title: 'The Channel', titleNl: 'Het Kanaal' } },
+  { path: '/portfolio', name: 'portfolio', component: () => import('./views/PortfolioView.vue'), meta: { title: 'Portfolio', titleNl: 'Portfolio' } },
+  { path: '/ideology', name: 'ideology', component: () => import('./views/IdeologyView.vue'), meta: { title: 'Ideology', titleNl: 'Ideologie' } },
+  { path: '/satire', name: 'satire', component: () => import('./views/SatireView.vue'), meta: { title: 'Satire', titleNl: 'Satire' } },
+  { path: '/controversy', name: 'controversy', component: () => import('./views/ControversyView.vue'), meta: { title: 'Controversy', titleNl: 'Controverse' } },
+  { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('./views/NotFoundView.vue'), meta: { title: 'Lost Goat', titleNl: 'Verdwaalde geit' } },
 ]
 
 // Each page remembers where you left it, for this browser session. Opening it again (by any link, not just
@@ -69,7 +70,7 @@ try {
 export const animatePage = ref(true)
 
 router.afterEach((to) => {
-  document.title = `${to.meta.title} · Goatis`
+  document.title = pageTitle(to)
   // Decided here, not in beforeEach: the route has just changed, and Vue renders the new page in its next
   // flush, so the old page never sees this flag change. Flipping it earlier (while a lazy page loads) would
   // turn the animation back on for the page being left, replaying it.
@@ -81,5 +82,7 @@ router.afterEach((to) => {
     // Remembered for this page load only.
   }
 })
+
+export const pageTitle = (route) => `${nl.value ? route.meta.titleNl : route.meta.title} · Goatis`
 
 export default router

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, toRefs } from 'vue'
 import { channelState, ensureChannelLoaded, loadMore } from '../channelStore'
+import { nl, t } from '../i18n'
 import MediaVideo from '../components/MediaVideo.vue'
 
 // State is shared through channelStore, so revisiting this page reuses what's already loaded.
@@ -20,9 +21,11 @@ const shown = computed(() => {
   return list.sort(sorters[sortBy.value])
 })
 
-const compact = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 })
-const fmt = (n) => compact.format(n)
-const date = (iso) => new Date(iso).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })
+const locale = computed(() => (nl.value ? 'nl-NL' : 'en'))
+const compact = computed(() => new Intl.NumberFormat(locale.value, { notation: 'compact', maximumFractionDigits: 1 }))
+const fmt = (n) => compact.value.format(n)
+const count = (n) => n.toLocaleString(locale.value)
+const date = (iso) => new Date(iso).toLocaleDateString(locale.value, { day: 'numeric', month: 'short', year: 'numeric' })
 function duration(s) {
   const h = Math.floor(s / 3600)
   const m = Math.floor((s % 3600) / 60)
@@ -41,7 +44,7 @@ onMounted(ensureChannelLoaded)
 
 <template>
   <article class="page">
-    <h1 class="wide">The Channel</h1>
+    <h1 class="wide">{{ t('The Channel', 'Het Kanaal') }}</h1>
 
     <div v-if="error" class="wide"><p class="error card">{{ error }}</p></div>
 
@@ -54,9 +57,9 @@ onMounted(ensureChannelLoaded)
             <span class="muted handle">{{ channel.handle }}</span>
           </h2>
           <dl class="stats">
-            <div><dt>Subscribers</dt><dd>{{ fmt(channel.subscribers) }}</dd></div>
-            <div><dt>Total views</dt><dd>{{ fmt(channel.views) }}</dd></div>
-            <div><dt>Videos</dt><dd>{{ channel.videoCount.toLocaleString() }}</dd></div>
+            <div><dt>{{ t('Subscribers', 'Abonnees') }}</dt><dd>{{ fmt(channel.subscribers) }}</dd></div>
+            <div><dt>{{ t('Total views', 'Totaal weergaven') }}</dt><dd>{{ fmt(channel.views) }}</dd></div>
+            <div><dt>{{ t('Videos', "Video's") }}</dt><dd>{{ count(channel.videoCount) }}</dd></div>
           </dl>
         </div>
       </div>
@@ -65,28 +68,34 @@ onMounted(ensureChannelLoaded)
     <div v-if="selected" id="player" class="wide player-meta">
       <h2>{{ selected.title }}</h2>
       <p class="small">
-        {{ date(selected.publishedAt) }} · {{ fmt(selected.views) }} views · {{ fmt(selected.likes) }} likes ·
-        {{ fmt(selected.comments) }} comments
+        {{ date(selected.publishedAt) }} · {{ fmt(selected.views) }} {{ t('views', 'weergaven') }} · {{ fmt(selected.likes) }} likes ·
+        {{ fmt(selected.comments) }} {{ t('comments', 'reacties') }}
       </p>
     </div>
     <MediaVideo v-if="selected" :youtube="selected.id" :title="selected.title" class="player" />
 
     <div v-if="videos.length" class="wide toolbar">
-      <input v-model="filter" type="search" placeholder="Filter loaded videos by title…" aria-label="Filter videos" />
+      <input v-model="filter" type="search" :placeholder="t('Filter loaded videos by title…', `Filter geladen video's op titel…`)" :aria-label="t('Filter videos', `Video's filteren`)" />
       <label>
-        Sort
+        {{ t('Sort', 'Sorteren') }}
         <select v-model="sortBy">
-          <option value="newest">Newest</option>
-          <option value="views">Most viewed</option>
-          <option value="likes">Most liked</option>
-          <option value="comments">Most comments</option>
-          <option value="longest">Longest</option>
+          <option value="newest">{{ t('Newest', 'Nieuwste') }}</option>
+          <option value="views">{{ t('Most viewed', 'Meest bekeken') }}</option>
+          <option value="likes">{{ t('Most liked', 'Meeste likes') }}</option>
+          <option value="comments">{{ t('Most comments', 'Meeste reacties') }}</option>
+          <option value="longest">{{ t('Longest', 'Langste') }}</option>
         </select>
       </label>
     </div>
     <p v-if="videos.length" class="wide small count">
-      Showing {{ shown.length }} of {{ videos.length }} loaded videos<span v-if="channel"> ({{ channel.videoCount.toLocaleString() }} on the channel)</span>.
-      Sorting and filtering apply to loaded videos only.
+      <template v-if="nl">
+        {{ shown.length }} van {{ videos.length }} geladen video's getoond<span v-if="channel"> ({{ count(channel.videoCount) }} op het kanaal)</span>.
+        Sorteren en filteren werkt alleen op geladen video's.
+      </template>
+      <template v-else>
+        Showing {{ shown.length }} of {{ videos.length }} loaded videos<span v-if="channel"> ({{ count(channel.videoCount) }} on the channel)</span>.
+        Sorting and filtering apply to loaded videos only.
+      </template>
     </p>
 
     <ul v-if="videos.length" class="wide videos">
@@ -97,14 +106,14 @@ onMounted(ensureChannelLoaded)
             <span class="length">{{ duration(v.seconds) }}</span>
           </span>
           <span class="title">{{ v.title }}</span>
-          <span class="small">{{ fmt(v.views) }} views · {{ date(v.publishedAt) }}</span>
+          <span class="small">{{ fmt(v.views) }} {{ t('views', 'weergaven') }} · {{ date(v.publishedAt) }}</span>
         </button>
       </li>
     </ul>
 
     <div class="wide more">
       <button v-if="nextPageToken || loading" class="btn" :disabled="loading" @click="loadMore">
-        {{ loading ? 'Loading…' : 'Load 50 more' }}
+        {{ loading ? t('Loading…', 'Laden…') : t('Load 50 more', '50 meer laden') }}
       </button>
     </div>
   </article>
