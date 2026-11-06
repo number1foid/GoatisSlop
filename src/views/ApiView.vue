@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getChannel, getUploads } from '../youtube'
+import MediaVideo from '../components/MediaVideo.vue'
 
 const channel = ref(null)
 const videos = ref([])
@@ -52,7 +53,8 @@ async function loadMore() {
 
 function play(video) {
   selected.value = video
-  window.scrollTo({ top: document.getElementById('player').offsetTop - 80, behavior: 'smooth' })
+  const top = document.getElementById('player').getBoundingClientRect().top + window.scrollY - 80
+  window.scrollTo({ top, behavior: 'smooth' })
 }
 
 onMounted(async () => {
@@ -68,118 +70,102 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="container page-head">
-    <span class="tag">Live API</span>
-    <h1>The Channel</h1>
-    <p class="muted">
-      Live numbers from the
-      <a href="https://developers.google.com/youtube/v3" target="_blank" rel="noopener">YouTube Data API</a>.
-    </p>
-  </section>
+  <article class="page">
+    <h1 class="wide">The Channel</h1>
 
-  <section class="container section">
-    <p v-if="error" class="error card">{{ error }}</p>
+    <div v-if="error" class="wide"><p class="error card">{{ error }}</p></div>
 
-    <div v-if="channel" class="card channel">
-      <img :src="channel.avatar" :alt="channel.title" width="88" height="88" />
-      <div>
-        <h2>
-          <a :href="`https://www.youtube.com/${channel.handle}`" target="_blank" rel="noopener">{{ channel.title }}</a>
-          <span class="muted handle">{{ channel.handle }}</span>
-        </h2>
-        <dl class="stats">
-          <div><dt>Subscribers</dt><dd>{{ fmt(channel.subscribers) }}</dd></div>
-          <div><dt>Total views</dt><dd>{{ fmt(channel.views) }}</dd></div>
-          <div><dt>Videos</dt><dd>{{ channel.videoCount.toLocaleString() }}</dd></div>
-        </dl>
+    <div v-if="channel" class="wide">
+      <div class="card channel">
+        <img :src="channel.avatar" :alt="channel.title" width="88" height="88" />
+        <div>
+          <h2>
+            <a :href="`https://www.youtube.com/${channel.handle}`" target="_blank" rel="noopener">{{ channel.title }}</a>
+            <span class="muted handle">{{ channel.handle }}</span>
+          </h2>
+          <dl class="stats">
+            <div><dt>Subscribers</dt><dd>{{ fmt(channel.subscribers) }}</dd></div>
+            <div><dt>Total views</dt><dd>{{ fmt(channel.views) }}</dd></div>
+            <div><dt>Videos</dt><dd>{{ channel.videoCount.toLocaleString() }}</dd></div>
+          </dl>
+        </div>
       </div>
     </div>
 
-    <div v-if="selected" id="player" class="player">
-      <div class="frame">
-        <iframe
-          :src="`https://www.youtube-nocookie.com/embed/${selected.id}`"
-          :title="selected.title"
-          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allowfullscreen
-        />
-      </div>
-      <h3>{{ selected.title }}</h3>
+    <div v-if="selected" id="player" class="wide player-meta">
+      <h2>{{ selected.title }}</h2>
       <p class="small">
         {{ date(selected.publishedAt) }} · {{ fmt(selected.views) }} views · {{ fmt(selected.likes) }} likes ·
         {{ fmt(selected.comments) }} comments
       </p>
     </div>
+    <MediaVideo v-if="selected" :youtube="selected.id" :title="selected.title" class="player" />
 
-    <template v-if="videos.length">
-      <div class="toolbar">
-        <input v-model="filter" type="search" placeholder="Filter loaded videos by title…" aria-label="Filter videos" />
-        <label>
-          Sort
-          <select v-model="sortBy">
-            <option value="newest">Newest</option>
-            <option value="views">Most viewed</option>
-            <option value="likes">Most liked</option>
-            <option value="comments">Most comments</option>
-            <option value="longest">Longest</option>
-          </select>
-        </label>
-      </div>
-      <p class="small">
-        Showing {{ shown.length }} of {{ videos.length }} loaded videos<span v-if="channel"> ({{ channel.videoCount.toLocaleString() }} on the channel)</span>.
-        Sorting and filtering apply to loaded videos only.
-      </p>
+    <div v-if="videos.length" class="wide toolbar">
+      <input v-model="filter" type="search" placeholder="Filter loaded videos by title…" aria-label="Filter videos" />
+      <label>
+        Sort
+        <select v-model="sortBy">
+          <option value="newest">Newest</option>
+          <option value="views">Most viewed</option>
+          <option value="likes">Most liked</option>
+          <option value="comments">Most comments</option>
+          <option value="longest">Longest</option>
+        </select>
+      </label>
+    </div>
+    <p v-if="videos.length" class="wide small count">
+      Showing {{ shown.length }} of {{ videos.length }} loaded videos<span v-if="channel"> ({{ channel.videoCount.toLocaleString() }} on the channel)</span>.
+      Sorting and filtering apply to loaded videos only.
+    </p>
 
-      <ul class="videos">
-        <li v-for="v in shown" :key="v.id">
-          <button class="video" :class="{ active: selected?.id === v.id }" @click="play(v)">
-            <span class="thumb">
-              <img :src="v.thumbnail" :alt="''" loading="lazy" width="320" height="180" />
-              <span class="length">{{ duration(v.seconds) }}</span>
-            </span>
-            <span class="title">{{ v.title }}</span>
-            <span class="small">{{ fmt(v.views) }} views · {{ date(v.publishedAt) }}</span>
-          </button>
-        </li>
-      </ul>
-    </template>
+    <ul v-if="videos.length" class="wide videos">
+      <li v-for="v in shown" :key="v.id">
+        <button class="video" :class="{ active: selected?.id === v.id }" @click="play(v)">
+          <span class="thumb">
+            <img :src="v.thumbnail" :alt="''" loading="lazy" width="320" height="180" />
+            <span class="length">{{ duration(v.seconds) }}</span>
+          </span>
+          <span class="title">{{ v.title }}</span>
+          <span class="small">{{ fmt(v.views) }} views · {{ date(v.publishedAt) }}</span>
+        </button>
+      </li>
+    </ul>
 
-    <div class="more">
+    <div class="wide more">
       <button v-if="nextPageToken || loading" class="btn" :disabled="loading" @click="loadMore">
         {{ loading ? 'Loading…' : 'Load 50 more' }}
       </button>
     </div>
-  </section>
+  </article>
 </template>
 
 <style scoped>
-.error { color: #b3261e; }
-.channel { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; margin-bottom: 32px; }
+.channel { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; margin-bottom: 40px; }
 .channel img { border-radius: 50%; }
-.channel h2 { margin: 0 0 8px; }
+.channel h2 { margin: 0 0 8px; font-size: 1.5rem; }
 .channel h2 a { color: var(--text); text-decoration: none; }
 .handle { font-size: 1rem; font-weight: 400; margin-left: 8px; }
 .stats { display: flex; gap: 32px; flex-wrap: wrap; margin: 0; }
 .stats dt { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .stats dd { margin: 0; font-size: 1.6rem; font-weight: 800; }
-.player { margin-bottom: 32px; }
-.frame { position: relative; aspect-ratio: 16 / 9; border-radius: var(--radius); overflow: hidden; background: #000; }
-.frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-.player h3 { margin: 12px 0 4px; }
-.player p { margin: 0; }
+.player-meta h2 { margin: 0 0 4px; font-size: 1.35rem; }
+.player-meta p { margin: 0; }
+.player { margin-top: 16px; }
 .toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-.toolbar input { flex: 1; min-width: 200px; padding: 10px 16px; border-radius: 999px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font-size: 1rem; }
-.toolbar input:focus, .toolbar select:focus { outline: none; border-color: var(--brand); }
+.toolbar input { flex: 1; min-width: 200px; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 1rem; }
+.toolbar input::placeholder { color: var(--muted); }
+.toolbar input:focus, .toolbar select:focus { outline: none; border-color: var(--accent); }
 .toolbar label { display: flex; gap: 8px; align-items: center; font-weight: 600; }
-.toolbar select { padding: 10px 12px; border-radius: 10px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font-size: 1rem; }
-.videos { list-style: none; padding: 0; display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.toolbar select { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--btn); color: var(--text); font-size: 1rem; }
+.count { margin-top: 12px; }
+.videos { list-style: none; display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); margin-top: 16px; margin-bottom: 0; }
 .video { display: flex; flex-direction: column; gap: 6px; width: 100%; padding: 0; border: none; background: none; color: var(--text); text-align: left; font: inherit; cursor: pointer; }
-.thumb { position: relative; display: block; border-radius: 10px; overflow: hidden; border: 3px solid transparent; }
-.video.active .thumb { border-color: var(--brand); }
+.thumb { position: relative; display: block; border-radius: 10px; overflow: hidden; border: 3px solid transparent; transition: border-color 0.2s ease; }
+.video:hover .thumb { border-color: var(--btn-hover); }
+.video.active .thumb { border-color: var(--accent); }
 .thumb img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
-.length { position: absolute; right: 6px; bottom: 6px; background: rgba(0, 0, 0, 0.8); color: #fff; font-size: 0.75rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+.length { position: absolute; right: 6px; bottom: 6px; background: rgba(0, 0, 0, 0.8); color: var(--text); font-size: 0.75rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
 .title { font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.video:hover .title { color: var(--brand); }
-.more { text-align: center; margin-top: 24px; }
+.more { text-align: center; margin-top: 32px; }
 </style>

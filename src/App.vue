@@ -23,6 +23,6 @@ watch(() => route.fullPath, () => { menuOpen.value = false })
   </header>
 
   <main>
-    <RouterView />
+    <RouterView :key="route.path" />
   </main>
 </template>
