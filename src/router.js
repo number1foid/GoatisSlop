@@ -1,3 +1,4 @@
+import { ref } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from './views/HomeView.vue'
 
@@ -17,8 +18,28 @@ const router = createRouter({
   scrollBehavior: () => ({ top: 0 }),
 })
 
+// Pages play their entrance animation only the first time they're opened in a browser session.
+const SEEN_KEY = 'goatis:seen-pages'
+const seenPages = new Set()
+try {
+  for (const path of JSON.parse(sessionStorage.getItem(SEEN_KEY) ?? '[]')) seenPages.add(path)
+} catch {
+  // Storage unavailable: pages simply animate on every visit.
+}
+export const animatePage = ref(true)
+
+router.beforeEach((to) => {
+  animatePage.value = !seenPages.has(to.path)
+})
+
 router.afterEach((to) => {
   document.title = `${to.meta.title} · Goatis`
+  seenPages.add(to.path)
+  try {
+    sessionStorage.setItem(SEEN_KEY, JSON.stringify([...seenPages]))
+  } catch {
+    // Remembered for this page load only.
+  }
 })
 
 export default router

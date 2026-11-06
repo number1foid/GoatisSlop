@@ -31,13 +31,26 @@ a:hover { text-decoration-color: var(--text); }
 h1, h2, h3 { line-height: 1.2; color: var(--text); }
 ::selection { background: #4a4a55; }
 
+/* Scrollbar: just a rounded thumb, with no arrow buttons and no track. Chromium and Safari use the
+   ::-webkit-scrollbar parts (they ignore them once scrollbar-color is set, so that stays Firefox-only). */
+::-webkit-scrollbar { width: 10px; height: 10px; background: transparent; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+::-webkit-scrollbar-thumb { background-color: #3a3a42; border: 2px solid transparent; border-radius: 999px; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background-color: #55555f; }
+@supports not selector(::-webkit-scrollbar) {
+  html { scrollbar-width: thin; scrollbar-color: #3a3a42 transparent; }
+}
+
 .container { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 16px; }
 .small { font-size: 0.85rem; color: var(--muted); }
 .muted { color: var(--muted); }
 
 /* Header */
 .site-header { position: sticky; top: 0; z-index: 10; background: rgba(20, 20, 22, 0.92); backdrop-filter: blur(8px); }
-.header-inner { display: flex; align-items: center; justify-content: flex-end; height: 64px; }
+/* The bar shares the text column's width, so the title lines up with page headings and the nav with the text's right edge. */
+.header-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 64px; max-width: var(--measure); }
+.site-title { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.01em; color: var(--text); text-decoration: none; }
 nav { display: flex; gap: 6px; }
 nav a { text-decoration: none; color: var(--text); padding: 8px 14px; border-radius: 999px; font-weight: 600; white-space: nowrap; transition: background-color 0.2s ease; }
 nav a:hover { background: var(--btn); }
@@ -75,6 +88,8 @@ nav a.router-link-exact-active { background: var(--btn-active); }
 
 @keyframes page-rise { from { transform: translateY(-16px); } to { transform: none; } }
 @keyframes page-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.no-anim .page > * { animation: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .page > * { animation: page-fade 0.4s ease-out both; }
