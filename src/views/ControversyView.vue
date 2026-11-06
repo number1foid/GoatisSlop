@@ -1,3 +1,7 @@
+<script setup>
+import MediaVideo from '../components/MediaVideo.vue'
+</script>
+
 <template>
   <article class="page">
     <h1>Controversy</h1>
@@ -26,6 +30,11 @@
 
     <p>This is also when the stunts that made him famous began. Inspired by another YouTuber who had eaten a raw cow heart at a vegan protest, he ate a raw goat's head at a vegan festival. Later performances included a pig's head and a squirrel in Australia and the UK, and a necklace made of a dead bird. The public, and vegans in particular, were not won over.</p>
 
+    <MediaVideo
+      src="/media/controversy-raw-poultry.mp4"
+      title="Raw poultry at a vegan event"
+      caption="An edit of a shirtless Goatis, covered in fake blood eating raw poultry at a vegan event."
+    />
     <p>The stunts made national news in the UK. He was fined £400 for disturbing the peace, said openly that he would neither pay nor show up to court, and left the country. As a result, he can't return without risking arrest.</p>
 
     <h2>In his own words</h2>
